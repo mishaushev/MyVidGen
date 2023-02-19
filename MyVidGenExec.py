@@ -3,16 +3,6 @@ from PyQt5.QtWidgets import QApplication, QMainWindow
 import sys
 
 
-def clicked():
-    
-    # Import the module
-    import MyVidGenExec
-
-        
-    #Call the function from MyVidGen.py
-    MyVidGenExec.my_vid_gen_exec()
-
-
 def my_ui_function():
     app = QApplication(sys.argv)
     win = QMainWindow()
@@ -29,6 +19,12 @@ def my_ui_function():
     
     win.show()
     sys.exit(app.exec_())
+
+def clicked():
     
-#Call my_vid_gen()
-my_vid_gen_exec()
+    # Import the module
+    import MyVidGen
+
+        
+    #Call the function from MyVidGen.py
+    MyVidGen.my_vid_gen_exec()    
