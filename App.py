@@ -2,15 +2,15 @@ import sys
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QProgressBar
 from PyQt5.QtCore import QTimer
-import MyVidGen
 
-class MainWindow():
+
     
     #Main Window
-    def my_ui_function():
-        app = QApplication(sys.argv)
+def my_ui_function():
+    app = QApplication(sys.argv)
     win = QMainWindow()
-    
+    win.setGeometry(200, 200, 300, 300)
+    win.setWindowTitle("Music Video Generator")
     
     label = QtWidgets.QLabel(win)
     label.setText("Music Video Generator")
@@ -18,9 +18,20 @@ class MainWindow():
     
     b1 = QtWidgets.QPushButton(win)
     b1.setText("Click me")
-    b1.clicked.connect(MyVidGen.my_vid_gen_exec())
+    b1.clicked.connect(clicked)
     
     win.show()
+    sys.exit(app.exec_())
+
+
+def clicked():
+    
+    # Import the module
+    import MyVidGen
+
+        
+    #Call the function from MyVidGen.py
+    MyVidGen.my_vid_gen_exec()            
 
 class ProgressBar(QWidget):
     
@@ -43,15 +54,14 @@ class ProgressBar(QWidget):
     def Increase_Step(self):
         self.progressBar.setValue(self.progressBar.value() + 1)
 
-app = QApplication(sys.argv)
 
 programm = ProgressBar()
 programm.show()
 
-sys.exit(app.exec_())
+sys.exit(programm.exec_())
 
 
 
 
 
- 
+
