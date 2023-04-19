@@ -18,4 +18,10 @@ https://api.pexels.com/videos/search?query=chnage+this+part
 
 4. Use your own audio and repleace the "YOUR_AUDIO.mp3"
 
+5. Go to the dedicated folder in your Terminal.
+
+6. Run "py MyVidGen.py"
+
+7. Wait, and you are done!
+
 Work in progress...
