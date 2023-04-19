@@ -20,8 +20,6 @@ https://api.pexels.com/videos/search?query=chnage+this+part
 
 5. Go to the dedicated folder in your Terminal.
 
-6. Run "py MyVidGen.py"
+6. Run "python MyVidGen.py"
 
-7. Wait, and you are done!
-
-Work in progress...
+Take a coffee break, and you are done!
