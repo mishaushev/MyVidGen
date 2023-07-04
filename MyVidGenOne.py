@@ -1,80 +1,79 @@
+import subprocess
+
 def my_vid_gen_exec():
     import json
+    import random
     import requests
     import librosa
     import soundfile as sf
     import pydub
     import wave
-    from tqdm import tqdm
+    import os
+    import shutil
     from moviepy.editor import VideoFileClip, concatenate_videoclips, AudioFileClip
-    import urllib.request
 
     print("Starting VidGenerator...")
 
-    # Fetch a random video from Pexels API
-    response = requests.get("https://api.pexels.com/videos/search?query=beach", headers={"Authorization": "jXIcrareVIEdvejaJkrhTrlbsiDc2D1BtUOSWoZw6sv5om8ggLuY6BWw"})
+    # Fetch multiple random videos from Pexels API
+    response = requests.get("https://api.pexels.com/videos/search?query=night+drive", headers={"Authorization": "jXIcrareVIEdvejaJkrhTrlbsiDc2D1BtUOSWoZw6sv5om8ggLuY6BWw"})
     print("Response received from Pexels API")
     response_json = json.loads(response.text)
     print("Response JSON loaded")
     video_urls = [v['video_files'][0]['link'] for v in response_json['videos']]
+
     # Randomly pick 1 video
     video_url = random.choice(video_urls)
 
     # Load audio file and detect bpm
     print("Loading audio file and detecting BPM...")
-    audio, sr = librosa.load("dreams.mp3", mono=True)
+    audio_file_path = "dreams.mp3.mp3"
+    audio, sr = librosa.load(audio_file_path, mono=True)
     audio_duration = librosa.get_duration(y=audio, sr=sr)
-    tempo = librosa.beat.tempo(y=audio, sr=sr)[0]
 
-    # Convert audio data to mp3 file
-    print("Converting audio data to mp3 file...")
-    with wave.open("audio.wav", "w") as wav_file:
-        wav_file.setparams((1, 2, sr, 0, "NONE", "not compressed"))
-        wav_file.writeframes(audio.tobytes())
-    audio_mp3 = pydub.AudioSegment.from_file("audio.wav", format="wav")
-    audio_mp3.export("audio.mp3", format="mp3")
-    print("Audio converted to mp3.")
+    # Calculate the number of clips needed
+    num_clips = int(audio_duration // 2)  # Each video clip is roughly 2 seconds
 
-    # Prepare a list to store the subclips
+    # Download the video
+    print(f"Downloading video from {video_url}...")
+    video_file_path = "temp.mp4"
+    with requests.get(video_url, stream=True) as r:
+        with open(video_file_path, 'wb') as f:
+            shutil.copyfileobj(r.raw, f)
+    print(f"Video downloaded to {video_file_path}")
+
+    # Load the video
+    video = VideoFileClip(video_file_path)
+
+    # Generate the video clips
+    print("Generating video clips...")
     subclips = []
-
-    # Calculate the number of clips needed and the duration of each clip
-    subclip_duration = 60 / tempo
-    num_clips = int(audio_duration / subclip_duration)
-
-    print(f"Generating {num_clips} video clips of {subclip_duration} seconds each...")
-
-    try:
-        print(f"Downloading video file from {video_url}...")
-        urllib.request.urlretrieve(video_url, "temp.mp4")
-        print(f"Loading video file from {video_url}...")
-        video = VideoFileClip("temp.mp4")
-    except Exception as e:
-        print(f"Error: Unable to load video from {video_url}. Exiting...")
-        print(f"Exception: {str(e)}")
-        return
-
-    for i in tqdm(range(num_clips), desc="Generating video clips"):
-        # Calculate start and end times for this subclip in the video, looping back to the start if necessary
-        start_time = (i * subclip_duration) % video.duration
-        end_time = start_time + subclip_duration
+    for i in range(num_clips):
+        start_time = (i * 2) % video.duration
+        end_time = start_time + 2
         if end_time > video.duration:
             end_time = video.duration  # Clip to video duration if necessary
-        # Extract subclip and add it to the list
         subclip = video.subclip(start_time, end_time)
         subclips.append(subclip)
 
-    print("Concatenating subclips...")
-    final_video = concatenate_videoclips(subclips)
+    # Loop the video until it matches the length of the audio
+    while len(subclips) * 2 < audio_duration:
+        subclips.extend(subclips)
 
-    print("Loading audio file...")
-    final_audio = AudioFileClip("audio.mp3")
-    
-    print("Finalizing video with audio...")
-    final_clip = final_video.set_audio(final_audio)
+    # Trim the excess video to match the length of the audio
+    subclips = subclips[:int(audio_duration // 2)]
+
+    # Create the final clip
+    print("Creating the final clip...")
+    final_clip = concatenate_videoclips(subclips)
 
     print("Writing final video file...")
-    final_clip.write_videofile("final_videoBPM.mp4", codec='libx264')
+    final_clip.write_videofile("final_video_no_audio.mp4", codec='libx264')
+
+    print("Merging audio and video...")
+    # This command takes the video without audio and the original audio file, and creates a new video file that has the audio attached.
+    # This is done using the ffmpeg software. The "-ar 44100" flag resamples the audio to 44100 Hz, which should be compatible with most videos.
+    command = ['ffmpeg', '-i', 'final_video_no_audio.mp4', '-i', audio_file_path, '-c:v', 'copy', '-c:a', 'aac', '-ar', '44100', 'final_videoBPM.mp4']
+    subprocess.run(command, check=True)
 
     print("Video generation completed!")
 
